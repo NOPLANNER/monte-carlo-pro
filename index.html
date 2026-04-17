@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Perfect Fit</title>
+    <title>Monte Carlo Pro - Instant Clear</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -14,7 +14,6 @@
             --loss: #ef4444;
             --sub: #9ca3af;
         }
-        /* 画面固定とセンタリング */
         html, body { 
             position: fixed;
             width: 100%;
@@ -30,13 +29,13 @@
             padding: 10px; 
             display: flex; 
             flex-direction: column; 
-            justify-content: center; /* 全体を縦方向中央に */
-            align-items: center; /* 全体を横方向中央に */
+            justify-content: center;
+            align-items: center; 
             box-sizing: border-box;
         }
         .container { 
             width: 100%; 
-            max-width: 400px; /* ここで横幅を制限 */
+            max-width: 400px; 
             margin: 0 auto; 
             background: var(--card); 
             padding: 14px; 
@@ -96,21 +95,47 @@
         .chip-l { color: var(--loss); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
         .chip-latest { border-color: #ffffff !important; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
 
-        /* グラフエリアの微調整 */
         .chart-container {
             width: 100%;
             max-width: 400px;
             margin: 10px auto;
             background: var(--card);
             border-radius: 16px;
-            padding: 10px 15px 10px 5px; /* 右側を少し広めに、左を狭めて中央へ寄せる */
+            padding: 10px 15px 10px 5px; 
             box-sizing: border-box;
             flex-grow: 1; 
             min-height: 150px;
         }
+
+        /* 改良版：タップで消える通知レイヤー */
+        #goalOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        #goalToast {
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            border: 2px solid white;
+            white-space: nowrap;
+            pointer-events: none; /* 下のレイヤーにタップを通すためではなく、オーバーレイ自体で処理 */
+        }
     </style>
 </head>
 <body>
+
+<div id="goalOverlay" onclick="hideGoalToast()">
+    <div id="goalToast">目標達成！</div>
+</div>
 
 <div class="container">
     <div class="config">
@@ -178,6 +203,24 @@
     var totalProfit = 0;
     var undoStack = [];
     var myChart = null;
+    var toastTimer = null;
+
+    function showGoalToast() {
+        const overlay = document.getElementById('goalOverlay');
+        overlay.style.display = 'flex';
+        
+        // 既存のタイマーがあればクリア
+        if (toastTimer) clearTimeout(toastTimer);
+        
+        // 3秒後にも自動で消える予備設定
+        toastTimer = setTimeout(hideGoalToast, 3000);
+    }
+
+    function hideGoalToast() {
+        const overlay = document.getElementById('goalOverlay');
+        overlay.style.display = 'none';
+        if (toastTimer) clearTimeout(toastTimer);
+    }
 
     function initChart() {
         const ctx = document.getElementById('balanceChart').getContext('2d');
@@ -211,11 +254,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        right: 10 // Chart.js内部の右側パディングを追加
-                    }
-                },
+                layout: { padding: { right: 10 } },
                 scales: {
                     x: { 
                         display: true, 
@@ -231,11 +270,7 @@
                     y1: { 
                         position: 'right',
                         grid: { display: false },
-                        ticks: { 
-                            color: '#10b981', 
-                            font: { size: 9 },
-                            padding: 5 // 数字を少し内側に寄せる
-                        }
+                        ticks: { color: '#10b981', font: { size: 9 }, padding: 5 }
                     }
                 },
                 plugins: { legend: { display: false } }
@@ -318,7 +353,10 @@
         totalProfit += pChange;
         sequence = sequence.slice((payout === 3 ? 2 : 1), (payout === 3 ? -2 : -1));
         historyData.push({ res: 'W', pChange: pChange });
-        if (sequence.length <= 1) { alert("目標達成！"); sequence = [1, 2, 3]; }
+        if (sequence.length <= 1) { 
+            showGoalToast();
+            sequence = [1, 2, 3]; 
+        }
         updateView();
     }
 
