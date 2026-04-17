@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Instant Clear</title>
+    <title>Monte Carlo Pro - Risk Label Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -66,7 +66,7 @@
         }
         label { color: var(--sub); font-size: 0.65rem; margin-bottom: 2px; display: block; text-transform: uppercase; }
 
-        .status-val { font-weight: bold; font-size: 0.9rem; padding: 5px 0; }
+        .status-val { font-weight: bold; font-size: 0.85rem; padding: 5px 0; }
         .risk-low { color: #60a5fa; }
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
@@ -107,7 +107,6 @@
             min-height: 150px;
         }
 
-        /* 改良版：タップで消える通知レイヤー */
         #goalOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -127,7 +126,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
             border: 2px solid white;
             white-space: nowrap;
-            pointer-events: none; /* 下のレイヤーにタップを通すためではなく、オーバーレイ自体で処理 */
+            pointer-events: none;
         }
     </style>
 </head>
@@ -208,11 +207,7 @@
     function showGoalToast() {
         const overlay = document.getElementById('goalOverlay');
         overlay.style.display = 'flex';
-        
-        // 既存のタイマーがあればクリア
         if (toastTimer) clearTimeout(toastTimer);
-        
-        // 3秒後にも自動で消える予備設定
         toastTimer = setTimeout(hideGoalToast, 3000);
     }
 
@@ -299,10 +294,20 @@
         var riskPercent = currentFunds > 0 ? (betAmt / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
         riskEl.className = "status-val";
-        if (riskPercent <= 1.0) riskEl.classList.add('risk-low');
-        else if (riskPercent <= 3.0) riskEl.classList.add('risk-mid');
-        else riskEl.classList.add('risk-high');
-        riskEl.innerText = riskPercent.toFixed(1) + "%";
+        
+        // リスクラベルの判定
+        var riskLabel = "";
+        if (riskPercent <= 1.0) {
+            riskEl.classList.add('risk-low');
+            riskLabel = "[LOW]";
+        } else if (riskPercent <= 3.0) {
+            riskEl.classList.add('risk-mid');
+            riskLabel = "[MID]";
+        } else {
+            riskEl.classList.add('risk-high');
+            riskLabel = "[HI]";
+        }
+        riskEl.innerText = riskPercent.toFixed(1) + "% " + riskLabel;
 
         var logHtml = "";
         var displayHistory = historyData.slice(-10).reverse();
