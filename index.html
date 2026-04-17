@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro Compact - No Currency</title>
+    <title>Monte Carlo Pro - Risk Color</title>
     <style>
         :root {
             --bg: #121212;
@@ -18,7 +18,7 @@
             background: var(--bg); 
             color: #e5e7eb; 
             margin: 0; 
-            padding: 8px; 
+            padding: 5px; /* 余白を最小化 */
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
@@ -28,13 +28,13 @@
         .container { 
             width: 100%; 
             max-width: 400px; 
-            margin: auto; 
+            margin: 0 auto; /* 上部の余白を削除 */
             background: var(--card); 
-            padding: 12px; 
+            padding: 10px; 
             border-radius: 12px; 
             display: flex; 
             flex-direction: column; 
-            gap: 8px;
+            gap: 6px;
         }
         
         .config { 
@@ -48,16 +48,17 @@
         }
         input, select { 
             width: 100%; 
-            padding: 5px; 
+            padding: 6px; 
             background: #3d3d3d; 
             border: 1px solid #444; 
             color: #fff; 
             border-radius: 4px; 
             font-size: 0.85rem; 
+            outline: none;
         }
         label { color: var(--sub); margin-bottom: 2px; display: block; }
 
-        .profit-bar { text-align: center; font-weight: bold; font-size: 0.95rem; }
+        .profit-bar { text-align: center; font-weight: bold; font-size: 1rem; margin: 2px 0; }
 
         .display { 
             text-align: center; 
@@ -67,7 +68,7 @@
             background: #181818; 
         }
         .bet-label { font-size: 0.7rem; color: var(--sub); }
-        .bet-amt { font-size: 2.5rem; font-weight: 900; color: var(--primary); line-height: 1.2; }
+        .bet-amt { font-size: 2.8rem; font-weight: 900; color: var(--primary); line-height: 1.1; }
         .seq-text { 
             font-family: monospace; 
             font-size: 1.1rem; 
@@ -83,10 +84,10 @@
 
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         button { 
-            padding: 14px; 
+            padding: 16px; 
             border: none; 
             border-radius: 8px; 
-            font-size: 1rem; 
+            font-size: 1.1rem; 
             font-weight: bold; 
             cursor: pointer; 
             color: #fff; 
@@ -95,8 +96,8 @@
         button:active { opacity: 0.6; transform: scale(0.98); }
         .btn-win { background: var(--win); }
         .btn-loss { background: var(--loss); }
-        .btn-undo { background: #4b5563; font-size: 0.85rem; padding: 10px; }
-        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.7rem; padding: 6px; }
+        .btn-undo { background: #4b5563; font-size: 0.9rem; padding: 12px; }
+        .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.7rem; padding: 6px; }
 
         .history-compact { 
             display: flex; 
@@ -104,7 +105,7 @@
             gap: 4px; 
             justify-content: center; 
             min-height: 25px; 
-            margin-top: 4px;
+            margin-top: 5px;
         }
         .chip { 
             padding: 2px 6px; 
@@ -165,15 +166,33 @@
 
     function createPercentOptions() {
         var sel = document.getElementById('percent');
+        var colors = ["#3b82f6", "#60a5fa", "#93c5fd", "#4ade80", "#22c55e", "#16a34a", "#fca5a5", "#f87171", "#ef4444", "#dc2626"];
+        
         for (var i = 1; i <= 10; i++) {
             var val = (i / 10).toFixed(1);
             var opt = document.createElement('option');
             opt.value = val;
-            var risk = i <= 3 ? "低" : i <= 6 ? "中" : "高";
-            opt.text = val + "% (" + risk + ")";
+            
+            var label = "";
+            if (val == "0.1") label = " (Low)";
+            if (val == "0.5") label = " (Middle)";
+            if (val == "1.0") label = " (High)";
+            
+            opt.text = val + "%" + label;
+            opt.style.color = colors[i-1]; // リスクに応じて色分け（ブラウザにより反映されない場合あり）
+            
             if (val == "0.5") opt.selected = true;
             sel.appendChild(opt);
         }
+    }
+
+    // 選択されたリスクに応じてセレクトボックス自体の色を変える
+    function updatePercentColor() {
+        var sel = document.getElementById('percent');
+        var val = parseFloat(sel.value);
+        if (val <= 0.3) sel.style.color = "#60a5fa"; // Blue
+        else if (val <= 0.6) sel.style.color = "#22c55e"; // Green
+        else sel.style.color = "#ef4444"; // Red
     }
 
     function getBetValue() {
@@ -185,6 +204,7 @@
     }
 
     function updateView() {
+        updatePercentColor();
         var betAmt = getBetValue();
         document.getElementById('betDisplay').innerText = betAmt.toLocaleString();
         document.getElementById('seqDisplay').innerText = sequence.join(' ');
@@ -194,7 +214,7 @@
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
         var logHtml = "";
-        for (var i = 0; i < Math.min(historyData.length, 14); i++) {
+        for (var i = 0; i < Math.min(historyData.length, 16); i++) {
             var h = historyData[i];
             logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + '">' + h.res + '</div>';
         }
