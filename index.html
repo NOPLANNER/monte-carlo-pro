@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Final</title>
+    <title>Monte Carlo Pro - Currency Edition</title>
     <style>
         :root {
             --bg: #121212;
@@ -48,6 +48,10 @@
         }
         .config-item { display: flex; flex-direction: column; }
         
+        /* 通貨と資金を横並びにするためのスタイル */
+        .input-group { display: flex; gap: 4px; }
+        .currency-select { width: 60px; flex-shrink: 0; padding: 10px 5px; text-align: center; }
+
         input, select { 
             width: 100%; 
             padding: 10px; 
@@ -120,10 +124,9 @@
         .btn-undo { background: #4b5563; font-size: 1rem; padding: 12px; }
         .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.75rem; padding: 12px; }
 
-        /* 履歴の調整 */
         .history-compact { 
             display: grid;
-            grid-template-columns: repeat(10, 1fr); /* 10個固定 */
+            grid-template-columns: repeat(10, 1fr);
             gap: 4px; 
             margin-top: 10px;
         }
@@ -137,8 +140,6 @@
         }
         .chip-w { color: var(--win); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
         .chip-l { color: var(--loss); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
-        
-        /* 最新の結果だけ白枠で強調 */
         .chip-latest { border-color: #ffffff !important; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
     </style>
 </head>
@@ -146,19 +147,25 @@
 
 <div class="container">
     <div class="config">
-        <div class="config-item">
-            <label>スタート資金</label>
-            <input type="number" id="startCapital" value="1000" oninput="updateView()">
+        <div class="config-item" style="grid-column: span 1;">
+            <label>通貨 / スタート資金</label>
+            <div class="input-group">
+                <select id="currency" class="currency-select" onchange="updateView()">
+                    <option value="¥">¥</option>
+                    <option value="$">$</option>
+                </select>
+                <input type="number" id="startCapital" value="100000" oninput="updateView()">
+            </div>
         </div>
         <div class="config-item">
             <label>ベット額 (1単位)</label>
-            <input type="number" id="baseBet" value="1" oninput="updateView()">
+            <input type="number" id="baseBet" value="100" oninput="updateView()">
         </div>
         <div class="config-item">
             <label>配当</label>
             <select id="payout" onchange="updateView()">
                 <option value="3">3倍</option>
-                <option value="2" selected>2倍</option>
+                <option value="2">2倍</option>
             </select>
         </div>
         <div class="config-item">
@@ -200,10 +207,15 @@
     var totalProfit = 0;
     var undoStack = [];
 
+    function formatCurrency(val) {
+        var cur = document.getElementById('currency').value;
+        return cur + val.toLocaleString();
+    }
+
     function updateStatusUI(currentBet) {
         var startCap = parseFloat(document.getElementById('startCapital').value) || 0;
         var currentFunds = startCap + totalProfit;
-        document.getElementById('currentFunds').innerText = currentFunds.toLocaleString();
+        document.getElementById('currentFunds').innerText = formatCurrency(currentFunds);
         
         var riskPercent = currentFunds > 0 ? (currentBet / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
@@ -217,27 +229,34 @@
 
     function getBetValue() {
         var base = parseFloat(document.getElementById('baseBet').value) || 0;
+        var cur = document.getElementById('currency').value;
         var units = (sequence.length >= 2) ? (sequence[0] + sequence[sequence.length - 1]) : (sequence[0] || 0);
-        return units * base;
+        var rawBet = units * base;
+
+        // 円(¥)の場合のみ、10の位を四捨五入して100円単位にする
+        if (cur === "¥") {
+            return Math.round(rawBet / 100) * 100;
+        }
+        return rawBet;
     }
 
     function updateView() {
         var betAmt = getBetValue();
-        document.getElementById('betDisplay').innerText = betAmt.toLocaleString();
+        var cur = document.getElementById('currency').value;
+        
+        document.getElementById('betDisplay').innerText = formatCurrency(betAmt);
         document.getElementById('seqDisplay').innerText = sequence.join(' ');
         
         var pEl = document.getElementById('profit');
-        pEl.innerText = (totalProfit >= 0 ? "+" : "") + totalProfit.toLocaleString();
+        pEl.innerText = (totalProfit >= 0 ? "+" : "") + formatCurrency(totalProfit);
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
         updateStatusUI(betAmt);
 
         var logHtml = "";
-        // 10件に制限
         var displayHistory = historyData.slice(0, 10);
         for (var i = 0; i < displayHistory.length; i++) {
             var h = displayHistory[i];
-            // インデックス0（最新）に chip-latest クラスを付与
             var latestClass = (i === 0) ? " chip-latest" : "";
             logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + latestClass + '">' + h.res + '</div>';
         }
