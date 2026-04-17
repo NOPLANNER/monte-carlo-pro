@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Currency Edition</title>
+    <title>Monte Carlo Pro - Analytics Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #121212;
@@ -18,11 +19,11 @@
             background: var(--bg); 
             color: #e5e7eb; 
             margin: 0; 
-            padding: 15px 12px; 
+            padding: 10px 12px; 
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
+            overflow-y: auto; /* グラフ追加に伴いスクロール許可 */
             box-sizing: border-box;
         }
         .container { 
@@ -36,6 +37,7 @@
             flex-direction: column; 
             gap: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
         
         .config { 
@@ -47,107 +49,62 @@
             gap: 10px; 
         }
         .config-item { display: flex; flex-direction: column; }
-        
-        /* 通貨と資金を横並びにするためのスタイル */
         .input-group { display: flex; gap: 4px; }
-        .currency-select { width: 60px; flex-shrink: 0; padding: 10px 5px; text-align: center; }
+        .currency-select { width: 60px; flex-shrink: 0; padding: 10px 5px; }
 
         input, select { 
-            width: 100%; 
-            padding: 10px; 
-            background: #3d3d3d; 
-            border: 2px solid #444; 
-            color: #fff; 
-            border-radius: 6px; 
-            font-size: 1rem; 
-            font-weight: bold;
-            outline: none;
-            box-sizing: border-box;
+            width: 100%; padding: 10px; background: #3d3d3d; border: 2px solid #444; 
+            color: #fff; border-radius: 6px; font-size: 1rem; font-weight: bold; outline: none; box-sizing: border-box;
         }
         label { color: var(--sub); font-size: 0.7rem; margin-bottom: 4px; display: block; text-transform: uppercase; }
 
-        .status-val {
-            font-weight: bold;
-            font-size: 0.95rem;
-            padding: 10px 0;
-        }
+        .status-val { font-weight: bold; font-size: 0.95rem; padding: 10px 0; }
         .risk-low { color: #60a5fa; }
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
 
-        .summary-bar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            padding: 0 5px;
-            margin: 2px 0;
-        }
+        .summary-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin: 2px 0; }
         .summary-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .summary-label { font-size: 0.65rem; color: var(--sub); margin-bottom: 2px; }
         .summary-value { font-weight: bold; font-size: 1.1rem; }
 
-        .display { 
-            text-align: center; 
-            padding: 15px; 
-            border: 2px solid #333; 
-            border-radius: 12px; 
-            background: #181818; 
-        }
+        .display { text-align: center; padding: 15px; border: 2px solid #333; border-radius: 12px; background: #181818; }
         .bet-label { font-size: 0.75rem; color: var(--sub); letter-spacing: 1px; }
         .bet-amt { font-size: 3.5rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 4px 0; }
-        .seq-text { 
-            font-family: monospace; 
-            font-size: 1.3rem; 
-            background: #000; 
-            padding: 10px; 
-            border-radius: 8px; 
-            letter-spacing: 3px; 
-            color: #fff; 
-            overflow-x: auto; 
-            white-space: nowrap; 
-        }
+        .seq-text { font-family: monospace; font-size: 1.3rem; background: #000; padding: 10px; border-radius: 8px; letter-spacing: 3px; color: #fff; overflow-x: auto; white-space: nowrap; }
 
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
-        button { 
-            padding: 18px; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1.3rem; 
-            font-weight: bold; 
-            cursor: pointer; 
-            color: #fff; 
-            touch-action: manipulation;
-        }
+        button { padding: 18px; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: bold; cursor: pointer; color: #fff; touch-action: manipulation; }
         button:active { opacity: 0.6; transform: scale(0.96); }
         .btn-win { background: var(--win); box-shadow: 0 4px 0 #059669; }
         .btn-loss { background: var(--loss); box-shadow: 0 4px 0 #dc2626; }
         .btn-undo { background: #4b5563; font-size: 1rem; padding: 12px; }
         .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.75rem; padding: 12px; }
 
-        .history-compact { 
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 4px; 
-            margin-top: 10px;
-        }
-        .chip { 
-            padding: 4px 0; 
-            border-radius: 4px; 
-            font-size: 0.65rem; 
-            font-weight: bold; 
-            text-align: center; 
-            border: 1.5px solid transparent;
-        }
+        .history-compact { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 10px; }
+        .chip { padding: 4px 0; border-radius: 4px; font-size: 0.65rem; font-weight: bold; text-align: center; border: 1.5px solid transparent; }
         .chip-w { color: var(--win); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
         .chip-l { color: var(--loss); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
         .chip-latest { border-color: #ffffff !important; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+        /* グラフエリアの設定 */
+        .chart-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto 0;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 12px;
+            box-sizing: border-box;
+            height: 200px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="config">
-        <div class="config-item" style="grid-column: span 1;">
+        <div class="config-item">
             <label>通貨 / スタート資金</label>
             <div class="input-group">
                 <select id="currency" class="currency-select" onchange="updateView()">
@@ -165,7 +122,7 @@
             <label>配当</label>
             <select id="payout" onchange="updateView()">
                 <option value="3">3倍</option>
-                <option value="2">2倍</option>
+                <option value="2" selected>2倍</option>
             </select>
         </div>
         <div class="config-item">
@@ -201,30 +158,128 @@
     <div id="historyLog" class="history-compact"></div>
 </div>
 
+<div class="chart-container">
+    <canvas id="balanceChart"></canvas>
+</div>
+
 <script>
     var sequence = [1, 2, 3];
-    var historyData = [];
+    var historyData = []; // 全履歴を保持
     var totalProfit = 0;
     var undoStack = [];
+    var myChart = null;
+
+    // グラフの初期化
+    function initChart() {
+        const ctx = document.getElementById('balanceChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Start'],
+                datasets: [
+                    {
+                        label: '資金推移',
+                        data: [0],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '損益',
+                        data: [0],
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { 
+                        position: 'left',
+                        grid: { color: '#333' },
+                        ticks: { color: '#9ca3af', font: { size: 10 } }
+                    },
+                    y1: { 
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: '#10b981', font: { size: 10 } }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
 
     function formatCurrency(val) {
         var cur = document.getElementById('currency').value;
-        return cur + val.toLocaleString();
+        return cur + Math.floor(val).toLocaleString();
     }
 
-    function updateStatusUI(currentBet) {
+    function updateView() {
         var startCap = parseFloat(document.getElementById('startCapital').value) || 0;
+        var betAmt = getBetValue();
         var currentFunds = startCap + totalProfit;
+        
+        document.getElementById('betDisplay').innerText = formatCurrency(betAmt);
+        document.getElementById('seqDisplay').innerText = sequence.join(' ');
         document.getElementById('currentFunds').innerText = formatCurrency(currentFunds);
         
-        var riskPercent = currentFunds > 0 ? (currentBet / currentFunds) * 100 : 0;
+        var pEl = document.getElementById('profit');
+        pEl.innerText = (totalProfit >= 0 ? "+" : "") + formatCurrency(totalProfit);
+        pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
+
+        // リスク分析
+        var riskPercent = currentFunds > 0 ? (betAmt / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
         riskEl.className = "status-val";
-        var level = "";
-        if (riskPercent <= 1.0) { level = "Low"; riskEl.classList.add('risk-low'); }
-        else if (riskPercent <= 3.0) { level = "Middle"; riskEl.classList.add('risk-mid'); }
-        else { level = "High"; riskEl.classList.add('risk-high'); }
-        riskEl.innerText = riskPercent.toFixed(1) + "% (" + level + ")";
+        if (riskPercent <= 1.0) riskEl.classList.add('risk-low');
+        else if (riskPercent <= 3.0) riskEl.classList.add('risk-mid');
+        else riskEl.classList.add('risk-high');
+        riskEl.innerText = riskPercent.toFixed(1) + "%";
+
+        // チップ履歴表示 (最新10件)
+        var logHtml = "";
+        var displayHistory = historyData.slice(-10).reverse();
+        for (var i = 0; i < displayHistory.length; i++) {
+            var h = displayHistory[i];
+            var latestClass = (i === 0) ? " chip-latest" : "";
+            logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + latestClass + '">' + h.res + '</div>';
+        }
+        document.getElementById('historyLog').innerHTML = logHtml;
+
+        updateChart(startCap);
+    }
+
+    function updateChart(startCap) {
+        if (!myChart) return;
+        let labels = ['Start'];
+        let fundsData = [startCap];
+        let profitData = [0];
+        let runningProfit = 0;
+
+        historyData.forEach((h, index) => {
+            labels.push(index + 1);
+            runningProfit += h.pChange;
+            fundsData.push(startCap + runningProfit);
+            profitData.push(runningProfit);
+        });
+
+        myChart.data.labels = labels;
+        myChart.data.datasets[0].data = fundsData;
+        myChart.data.datasets[1].data = profitData;
+        // 損益の色をプラスマイナスで変える
+        myChart.data.datasets[1].borderColor = runningProfit >= 0 ? '#10b981' : '#ef4444';
+        myChart.update('none');
     }
 
     function getBetValue() {
@@ -232,44 +287,17 @@
         var cur = document.getElementById('currency').value;
         var units = (sequence.length >= 2) ? (sequence[0] + sequence[sequence.length - 1]) : (sequence[0] || 0);
         var rawBet = units * base;
-
-        // 円(¥)の場合のみ、10の位を四捨五入して100円単位にする
-        if (cur === "¥") {
-            return Math.round(rawBet / 100) * 100;
-        }
-        return rawBet;
-    }
-
-    function updateView() {
-        var betAmt = getBetValue();
-        var cur = document.getElementById('currency').value;
-        
-        document.getElementById('betDisplay').innerText = formatCurrency(betAmt);
-        document.getElementById('seqDisplay').innerText = sequence.join(' ');
-        
-        var pEl = document.getElementById('profit');
-        pEl.innerText = (totalProfit >= 0 ? "+" : "") + formatCurrency(totalProfit);
-        pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
-
-        updateStatusUI(betAmt);
-
-        var logHtml = "";
-        var displayHistory = historyData.slice(0, 10);
-        for (var i = 0; i < displayHistory.length; i++) {
-            var h = displayHistory[i];
-            var latestClass = (i === 0) ? " chip-latest" : "";
-            logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + latestClass + '">' + h.res + '</div>';
-        }
-        document.getElementById('historyLog').innerHTML = logHtml;
+        return (cur === "¥") ? Math.round(rawBet / 100) * 100 : rawBet;
     }
 
     function handleWin() {
         saveState();
         var currentBet = getBetValue();
         var payout = parseInt(document.getElementById('payout').value);
-        totalProfit += (currentBet * (payout - 1));
+        var pChange = (currentBet * (payout - 1));
+        totalProfit += pChange;
         sequence = sequence.slice((payout === 3 ? 2 : 1), (payout === 3 ? -2 : -1));
-        historyData.unshift({ res: 'W' });
+        historyData.push({ res: 'W', pChange: pChange });
         if (sequence.length <= 1) { alert("目標達成！"); sequence = [1, 2, 3]; }
         updateView();
     }
@@ -278,9 +306,10 @@
         saveState();
         var currentBet = getBetValue();
         var units = (sequence.length >= 2) ? (sequence[0] + sequence[sequence.length - 1]) : sequence[0];
-        totalProfit -= currentBet;
+        var pChange = -currentBet;
+        totalProfit += pChange;
         sequence.push(units);
-        historyData.unshift({ res: 'L' });
+        historyData.push({ res: 'L', pChange: pChange });
         updateView();
     }
 
@@ -295,7 +324,7 @@
     }
 
     function handleReset() {
-        if (confirm("リセットしますか？")) {
+        if (confirm("全履歴をリセットしますか？")) {
             sequence = [1, 2, 3];
             historyData = [];
             totalProfit = 0;
@@ -306,12 +335,13 @@
 
     function saveState() {
         undoStack.push({
-            sequence: JSON.parse(JSON.stringify(sequence)),
+            sequence: [...sequence],
             totalProfit: totalProfit,
             historyData: JSON.parse(JSON.stringify(historyData))
         });
     }
 
+    initChart();
     updateView();
 </script>
 </body>
