@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo - Professional Tracker</title>
+    <title>Monte Carlo - Professional Edition</title>
     <style>
         :root {
             --bg: #121212;
@@ -18,7 +18,7 @@
             background: var(--bg); 
             color: #e5e7eb; 
             margin: 0; 
-            padding: 20px 12px; 
+            padding: 15px 12px; 
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
@@ -30,7 +30,7 @@
             max-width: 400px; 
             margin: 0 auto; 
             background: var(--card); 
-            padding: 18px; 
+            padding: 16px; 
             border-radius: 16px; 
             display: flex; 
             flex-direction: column; 
@@ -44,7 +44,7 @@
             border-radius: 10px; 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
+            gap: 10px; 
         }
         .config-item { display: flex; flex-direction: column; }
         
@@ -60,25 +60,28 @@
             outline: none;
             box-sizing: border-box;
         }
-        label { color: var(--sub); font-size: 0.75rem; margin-bottom: 4px; display: block; }
+        label { color: var(--sub); font-size: 0.7rem; margin-bottom: 4px; display: block; text-transform: uppercase; }
 
-        /* ステータス表示エリア */
-        .status-area {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 4px;
-        }
         .status-val {
             font-weight: bold;
             font-size: 0.95rem;
-            text-align: left;
+            padding: 10px 0;
         }
         .risk-low { color: #60a5fa; }
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
 
-        .profit-bar { text-align: center; font-weight: bold; font-size: 1.2rem; margin: 5px 0; }
+        /* 資金と損益のバー */
+        .summary-bar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 0 5px;
+            margin: 2px 0;
+        }
+        .summary-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .summary-label { font-size: 0.65rem; color: var(--sub); margin-bottom: 2px; }
+        .summary-value { font-weight: bold; font-size: 1.1rem; }
 
         .display { 
             text-align: center; 
@@ -87,8 +90,8 @@
             border-radius: 12px; 
             background: #181818; 
         }
-        .bet-label { font-size: 0.8rem; color: var(--sub); letter-spacing: 1px; }
-        .bet-amt { font-size: 3.2rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 5px 0; }
+        .bet-label { font-size: 0.75rem; color: var(--sub); letter-spacing: 1px; }
+        .bet-amt { font-size: 3.5rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 4px 0; }
         .seq-text { 
             font-family: monospace; 
             font-size: 1.3rem; 
@@ -101,7 +104,7 @@
             white-space: nowrap; 
         }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 5px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
         button { 
             padding: 18px; 
             border: none; 
@@ -116,19 +119,19 @@
         .btn-win { background: var(--win); box-shadow: 0 4px 0 #059669; }
         .btn-loss { background: var(--loss); box-shadow: 0 4px 0 #dc2626; }
         .btn-undo { background: #4b5563; font-size: 1rem; padding: 12px; }
-        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.8rem; padding: 12px; }
+        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.75rem; padding: 12px; }
 
         .history-compact { 
             display: flex; 
             flex-wrap: wrap; 
-            gap: 5px; 
+            gap: 4px; 
             justify-content: center; 
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .chip { 
             padding: 3px 8px; 
             border-radius: 4px; 
-            font-size: 0.75rem; 
+            font-size: 0.7rem; 
             font-weight: bold; 
             min-width: 28px; 
             text-align: center; 
@@ -156,19 +159,22 @@
                 <option value="2">2倍</option>
             </select>
         </div>
-        <div class="config-item status-area">
-            <div>
-                <label>リスク</label>
-                <div id="riskDisplay" class="status-val">--</div>
-            </div>
-            <div style="margin-top: 4px;">
-                <label>現在の軍資金</label>
-                <div id="currentFunds" class="status-val" style="color: #fff;">0</div>
-            </div>
+        <div class="config-item">
+            <label>リスク分析</label>
+            <div id="riskDisplay" class="status-val">--</div>
         </div>
     </div>
 
-    <div id="profit" class="profit-bar">損益: 0</div>
+    <div class="summary-bar">
+        <div class="summary-item">
+            <span class="summary-label">現在の資金</span>
+            <span id="currentFunds" class="summary-value" style="color: #fff;">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">損益</span>
+            <span id="profit" class="summary-value" style="color: #10b981;">0</span>
+        </div>
+    </div>
 
     <div class="display">
         <div class="bet-label">NEXT BET</div>
@@ -196,10 +202,8 @@
         var startCap = parseFloat(document.getElementById('startCapital').value) || 0;
         var currentFunds = startCap + totalProfit;
         
-        // 軍資金表示の更新
         document.getElementById('currentFunds').innerText = currentFunds.toLocaleString();
         
-        // リスク計算（現在の軍資金ベース）
         var riskPercent = currentFunds > 0 ? (currentBet / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
         
@@ -230,7 +234,7 @@
         document.getElementById('seqDisplay').innerText = sequence.join(' ');
         
         var pEl = document.getElementById('profit');
-        pEl.innerText = "損益: " + totalProfit.toLocaleString();
+        pEl.innerText = (totalProfit >= 0 ? "+" : "") + totalProfit.toLocaleString();
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
         updateStatusUI(betAmt);
