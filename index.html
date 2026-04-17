@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Final Risk Edition</title>
+    <title>Monte Carlo Pro - Refined</title>
     <style>
         :root {
             --bg: #121212;
@@ -18,109 +18,113 @@
             background: var(--bg); 
             color: #e5e7eb; 
             margin: 0; 
-            padding: 0; /* 余白をゼロに */
+            padding: 20px 12px; /* 上部に適度な余白を追加 */
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
+            box-sizing: border-box;
         }
         .container { 
             width: 100%; 
             max-width: 400px; 
             margin: 0 auto; 
             background: var(--card); 
-            padding: 10px; 
-            border-radius: 0 0 12px 12px; /* 上は角を丸めない */
+            padding: 18px; 
+            border-radius: 16px; 
             display: flex; 
             flex-direction: column; 
-            gap: 5px;
+            gap: 12px; /* パーツ間の間隔を広げた */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         
         .config { 
             background: #2d2d2d; 
-            padding: 8px; 
-            border-radius: 8px; 
+            padding: 12px; 
+            border-radius: 10px; 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 6px; 
-            font-size: 0.75rem; 
+            gap: 10px; 
+            font-size: 0.8rem; 
         }
         input, select { 
             width: 100%; 
-            padding: 8px; 
+            padding: 10px; 
             background: #3d3d3d; 
-            border: 1px solid #444; 
+            border: 2px solid #444; 
             color: #fff; 
-            border-radius: 4px; 
-            font-size: 0.9rem; 
+            border-radius: 6px; 
+            font-size: 1rem; 
             font-weight: bold;
             outline: none;
-            transition: border-color 0.3s;
+            box-sizing: border-box;
+            transition: all 0.3s;
         }
-        label { color: var(--sub); margin-bottom: 2px; display: block; }
+        label { color: var(--sub); margin-bottom: 4px; display: block; }
 
-        /* リスク別の動的クラス */
+        /* リスク別の枠色設定 */
         .risk-low { border-color: #3b82f6 !important; color: #60a5fa !important; }
         .risk-mid { border-color: #10b981 !important; color: #10b981 !important; }
         .risk-high { border-color: #ef4444 !important; color: #ef4444 !important; }
 
-        .profit-bar { text-align: center; font-weight: bold; font-size: 1rem; margin: 2px 0; }
+        .profit-bar { text-align: center; font-weight: bold; font-size: 1.1rem; margin: 5px 0; }
 
         .display { 
             text-align: center; 
-            padding: 8px; 
-            border: 1.5px solid #333; 
-            border-radius: 10px; 
+            padding: 15px; 
+            border: 2px solid #333; 
+            border-radius: 12px; 
             background: #181818; 
         }
-        .bet-label { font-size: 0.7rem; color: var(--sub); }
-        .bet-amt { font-size: 2.8rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 2px 0; }
+        .bet-label { font-size: 0.8rem; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
+        .bet-amt { font-size: 3.2rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 5px 0; }
         .seq-text { 
             font-family: monospace; 
-            font-size: 1.1rem; 
+            font-size: 1.3rem; 
             background: #000; 
-            padding: 6px; 
-            border-radius: 6px; 
-            letter-spacing: 2px; 
+            padding: 10px; 
+            border-radius: 8px; 
+            letter-spacing: 3px; 
             color: #fff; 
             overflow-x: auto; 
             white-space: nowrap; 
         }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
         button { 
-            padding: 15px; 
+            padding: 18px; 
             border: none; 
-            border-radius: 8px; 
-            font-size: 1.2rem; 
+            border-radius: 10px; 
+            font-size: 1.3rem; 
             font-weight: bold; 
             cursor: pointer; 
             color: #fff; 
             touch-action: manipulation;
         }
-        button:active { opacity: 0.6; transform: scale(0.98); }
-        .btn-win { background: var(--win); }
-        .btn-loss { background: var(--loss); }
-        .btn-undo { background: #4b5563; font-size: 0.9rem; padding: 10px; }
-        .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.7rem; padding: 6px; }
+        button:active { opacity: 0.6; transform: scale(0.96); }
+        .btn-win { background: var(--win); box-shadow: 0 4px 0 #059669; }
+        .btn-loss { background: var(--loss); box-shadow: 0 4px 0 #dc2626; }
+        .btn-undo { background: #4b5563; font-size: 1rem; padding: 12px; grid-column: span 1; }
+        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.8rem; padding: 12px; }
 
         .history-compact { 
             display: flex; 
             flex-wrap: wrap; 
-            gap: 3px; 
+            gap: 5px; 
             justify-content: center; 
-            margin-top: 5px;
+            margin-top: 10px;
+            min-height: 30px;
         }
         .chip { 
-            padding: 2px 5px; 
-            border-radius: 3px; 
-            font-size: 0.65rem; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            font-size: 0.75rem; 
             font-weight: bold; 
-            min-width: 22px; 
+            min-width: 28px; 
             text-align: center; 
         }
-        .chip-w { color: var(--win); border: 1px solid var(--win); background: rgba(16, 185, 129, 0.1); }
-        .chip-l { color: var(--loss); border: 1px solid var(--loss); background: rgba(239, 68, 68, 0.1); }
+        .chip-w { color: var(--win); border: 1.5px solid var(--win); background: rgba(16, 185, 129, 0.1); }
+        .chip-l { color: var(--loss); border: 1.5px solid var(--loss); background: rgba(239, 68, 68, 0.1); }
     </style>
 </head>
 <body>
@@ -180,10 +184,7 @@
             if (val == "0.5") riskLabel = " Middle";
             if (val == "1.0") riskLabel = " High";
             
-            // 絵文字でリスクを視覚化（確実な方法）
-            var emoji = i <= 3 ? "🔵" : i <= 6 ? "🟢" : "🔴";
-            opt.text = emoji + " " + val + "%" + riskLabel;
-            
+            opt.text = val + "%" + riskLabel;
             if (val == "0.5") opt.selected = true;
             sel.appendChild(opt);
         }
@@ -192,11 +193,7 @@
     function updateRiskUI() {
         var sel = document.getElementById('percent');
         var val = parseFloat(sel.value);
-        
-        // クラスを一度リセット
         sel.classList.remove('risk-low', 'risk-mid', 'risk-high');
-        
-        // 値に応じてクラスを付与
         if (val <= 0.3) sel.classList.add('risk-low');
         else if (val <= 0.6) sel.classList.add('risk-mid');
         else sel.classList.add('risk-high');
@@ -221,7 +218,7 @@
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
         var logHtml = "";
-        for (var i = 0; i < Math.min(historyData.length, 16); i++) {
+        for (var i = 0; i < Math.min(historyData.length, 12); i++) {
             var h = historyData[i];
             logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + '">' + h.res + '</div>';
         }
