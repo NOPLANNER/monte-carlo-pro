@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Risk Color</title>
+    <title>Monte Carlo Pro - Final Risk Edition</title>
     <style>
         :root {
             --bg: #121212;
@@ -18,23 +18,22 @@
             background: var(--bg); 
             color: #e5e7eb; 
             margin: 0; 
-            padding: 5px; /* 余白を最小化 */
+            padding: 0; /* 余白をゼロに */
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
-            box-sizing: border-box;
         }
         .container { 
             width: 100%; 
             max-width: 400px; 
-            margin: 0 auto; /* 上部の余白を削除 */
+            margin: 0 auto; 
             background: var(--card); 
             padding: 10px; 
-            border-radius: 12px; 
+            border-radius: 0 0 12px 12px; /* 上は角を丸めない */
             display: flex; 
             flex-direction: column; 
-            gap: 6px;
+            gap: 5px;
         }
         
         .config { 
@@ -48,27 +47,34 @@
         }
         input, select { 
             width: 100%; 
-            padding: 6px; 
+            padding: 8px; 
             background: #3d3d3d; 
             border: 1px solid #444; 
             color: #fff; 
             border-radius: 4px; 
-            font-size: 0.85rem; 
+            font-size: 0.9rem; 
+            font-weight: bold;
             outline: none;
+            transition: border-color 0.3s;
         }
         label { color: var(--sub); margin-bottom: 2px; display: block; }
+
+        /* リスク別の動的クラス */
+        .risk-low { border-color: #3b82f6 !important; color: #60a5fa !important; }
+        .risk-mid { border-color: #10b981 !important; color: #10b981 !important; }
+        .risk-high { border-color: #ef4444 !important; color: #ef4444 !important; }
 
         .profit-bar { text-align: center; font-weight: bold; font-size: 1rem; margin: 2px 0; }
 
         .display { 
             text-align: center; 
-            padding: 10px; 
+            padding: 8px; 
             border: 1.5px solid #333; 
             border-radius: 10px; 
             background: #181818; 
         }
         .bet-label { font-size: 0.7rem; color: var(--sub); }
-        .bet-amt { font-size: 2.8rem; font-weight: 900; color: var(--primary); line-height: 1.1; }
+        .bet-amt { font-size: 2.8rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 2px 0; }
         .seq-text { 
             font-family: monospace; 
             font-size: 1.1rem; 
@@ -79,15 +85,14 @@
             color: #fff; 
             overflow-x: auto; 
             white-space: nowrap; 
-            margin-top: 4px;
         }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
         button { 
-            padding: 16px; 
+            padding: 15px; 
             border: none; 
             border-radius: 8px; 
-            font-size: 1.1rem; 
+            font-size: 1.2rem; 
             font-weight: bold; 
             cursor: pointer; 
             color: #fff; 
@@ -96,23 +101,22 @@
         button:active { opacity: 0.6; transform: scale(0.98); }
         .btn-win { background: var(--win); }
         .btn-loss { background: var(--loss); }
-        .btn-undo { background: #4b5563; font-size: 0.9rem; padding: 12px; }
+        .btn-undo { background: #4b5563; font-size: 0.9rem; padding: 10px; }
         .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.7rem; padding: 6px; }
 
         .history-compact { 
             display: flex; 
             flex-wrap: wrap; 
-            gap: 4px; 
+            gap: 3px; 
             justify-content: center; 
-            min-height: 25px; 
             margin-top: 5px;
         }
         .chip { 
-            padding: 2px 6px; 
-            border-radius: 4px; 
+            padding: 2px 5px; 
+            border-radius: 3px; 
             font-size: 0.65rem; 
             font-weight: bold; 
-            min-width: 24px; 
+            min-width: 22px; 
             text-align: center; 
         }
         .chip-w { color: var(--win); border: 1px solid var(--win); background: rgba(16, 185, 129, 0.1); }
@@ -166,33 +170,36 @@
 
     function createPercentOptions() {
         var sel = document.getElementById('percent');
-        var colors = ["#3b82f6", "#60a5fa", "#93c5fd", "#4ade80", "#22c55e", "#16a34a", "#fca5a5", "#f87171", "#ef4444", "#dc2626"];
-        
         for (var i = 1; i <= 10; i++) {
             var val = (i / 10).toFixed(1);
             var opt = document.createElement('option');
             opt.value = val;
             
-            var label = "";
-            if (val == "0.1") label = " (Low)";
-            if (val == "0.5") label = " (Middle)";
-            if (val == "1.0") label = " (High)";
+            var riskLabel = "";
+            if (val == "0.1") riskLabel = " Low";
+            if (val == "0.5") riskLabel = " Middle";
+            if (val == "1.0") riskLabel = " High";
             
-            opt.text = val + "%" + label;
-            opt.style.color = colors[i-1]; // リスクに応じて色分け（ブラウザにより反映されない場合あり）
+            // 絵文字でリスクを視覚化（確実な方法）
+            var emoji = i <= 3 ? "🔵" : i <= 6 ? "🟢" : "🔴";
+            opt.text = emoji + " " + val + "%" + riskLabel;
             
             if (val == "0.5") opt.selected = true;
             sel.appendChild(opt);
         }
     }
 
-    // 選択されたリスクに応じてセレクトボックス自体の色を変える
-    function updatePercentColor() {
+    function updateRiskUI() {
         var sel = document.getElementById('percent');
         var val = parseFloat(sel.value);
-        if (val <= 0.3) sel.style.color = "#60a5fa"; // Blue
-        else if (val <= 0.6) sel.style.color = "#22c55e"; // Green
-        else sel.style.color = "#ef4444"; // Red
+        
+        // クラスを一度リセット
+        sel.classList.remove('risk-low', 'risk-mid', 'risk-high');
+        
+        // 値に応じてクラスを付与
+        if (val <= 0.3) sel.classList.add('risk-low');
+        else if (val <= 0.6) sel.classList.add('risk-mid');
+        else sel.classList.add('risk-high');
     }
 
     function getBetValue() {
@@ -204,7 +211,7 @@
     }
 
     function updateView() {
-        updatePercentColor();
+        updateRiskUI();
         var betAmt = getBetValue();
         document.getElementById('betDisplay').innerText = betAmt.toLocaleString();
         document.getElementById('seqDisplay').innerText = sequence.join(' ');
