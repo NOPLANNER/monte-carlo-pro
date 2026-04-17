@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo - Professional Edition</title>
+    <title>Monte Carlo Pro - Final</title>
     <style>
         :root {
             --bg: #121212;
@@ -71,7 +71,6 @@
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
 
-        /* 資金と損益のバー */
         .summary-bar { 
             display: flex; 
             justify-content: space-between; 
@@ -119,25 +118,28 @@
         .btn-win { background: var(--win); box-shadow: 0 4px 0 #059669; }
         .btn-loss { background: var(--loss); box-shadow: 0 4px 0 #dc2626; }
         .btn-undo { background: #4b5563; font-size: 1rem; padding: 12px; }
-        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.75rem; padding: 12px; }
+        .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.75rem; padding: 12px; }
 
+        /* 履歴の調整 */
         .history-compact { 
-            display: flex; 
-            flex-wrap: wrap; 
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 10個固定 */
             gap: 4px; 
-            justify-content: center; 
-            margin-top: 8px;
+            margin-top: 10px;
         }
         .chip { 
-            padding: 3px 8px; 
+            padding: 4px 0; 
             border-radius: 4px; 
-            font-size: 0.7rem; 
+            font-size: 0.65rem; 
             font-weight: bold; 
-            min-width: 28px; 
             text-align: center; 
+            border: 1.5px solid transparent;
         }
-        .chip-w { color: var(--win); border: 1.5px solid var(--win); background: rgba(16, 185, 129, 0.1); }
-        .chip-l { color: var(--loss); border: 1.5px solid var(--loss); background: rgba(239, 68, 68, 0.1); }
+        .chip-w { color: var(--win); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+        .chip-l { color: var(--loss); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
+        
+        /* 最新の結果だけ白枠で強調 */
+        .chip-latest { border-color: #ffffff !important; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
     </style>
 </head>
 <body>
@@ -146,17 +148,17 @@
     <div class="config">
         <div class="config-item">
             <label>スタート資金</label>
-            <input type="number" id="startCapital" value="100000" oninput="updateView()">
+            <input type="number" id="startCapital" value="1000" oninput="updateView()">
         </div>
         <div class="config-item">
             <label>ベット額 (1単位)</label>
-            <input type="number" id="baseBet" value="200" oninput="updateView()">
+            <input type="number" id="baseBet" value="1" oninput="updateView()">
         </div>
         <div class="config-item">
             <label>配当</label>
             <select id="payout" onchange="updateView()">
                 <option value="3">3倍</option>
-                <option value="2">2倍</option>
+                <option value="2" selected>2倍</option>
             </select>
         </div>
         <div class="config-item">
@@ -201,24 +203,15 @@
     function updateStatusUI(currentBet) {
         var startCap = parseFloat(document.getElementById('startCapital').value) || 0;
         var currentFunds = startCap + totalProfit;
-        
         document.getElementById('currentFunds').innerText = currentFunds.toLocaleString();
         
         var riskPercent = currentFunds > 0 ? (currentBet / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
-        
         riskEl.className = "status-val";
         var level = "";
-        if (riskPercent <= 1.0) {
-            level = "Low";
-            riskEl.classList.add('risk-low');
-        } else if (riskPercent <= 3.0) {
-            level = "Middle";
-            riskEl.classList.add('risk-mid');
-        } else {
-            level = "High";
-            riskEl.classList.add('risk-high');
-        }
+        if (riskPercent <= 1.0) { level = "Low"; riskEl.classList.add('risk-low'); }
+        else if (riskPercent <= 3.0) { level = "Middle"; riskEl.classList.add('risk-mid'); }
+        else { level = "High"; riskEl.classList.add('risk-high'); }
         riskEl.innerText = riskPercent.toFixed(1) + "% (" + level + ")";
     }
 
@@ -240,9 +233,13 @@
         updateStatusUI(betAmt);
 
         var logHtml = "";
-        for (var i = 0; i < Math.min(historyData.length, 12); i++) {
-            var h = historyData[i];
-            logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + '">' + h.res + '</div>';
+        // 10件に制限
+        var displayHistory = historyData.slice(0, 10);
+        for (var i = 0; i < displayHistory.length; i++) {
+            var h = displayHistory[i];
+            // インデックス0（最新）に chip-latest クラスを付与
+            var latestClass = (i === 0) ? " chip-latest" : "";
+            logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + latestClass + '">' + h.res + '</div>';
         }
         document.getElementById('historyLog').innerHTML = logHtml;
     }
@@ -253,7 +250,7 @@
         var payout = parseInt(document.getElementById('payout').value);
         totalProfit += (currentBet * (payout - 1));
         sequence = sequence.slice((payout === 3 ? 2 : 1), (payout === 3 ? -2 : -1));
-        historyData.unshift({ res: 'W', amt: currentBet });
+        historyData.unshift({ res: 'W' });
         if (sequence.length <= 1) { alert("目標達成！"); sequence = [1, 2, 3]; }
         updateView();
     }
@@ -264,7 +261,7 @@
         var units = (sequence.length >= 2) ? (sequence[0] + sequence[sequence.length - 1]) : sequence[0];
         totalProfit -= currentBet;
         sequence.push(units);
-        historyData.unshift({ res: 'L', amt: currentBet });
+        historyData.unshift({ res: 'L' });
         updateView();
     }
 
