@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo - Stack & Bet Size</title>
+    <title>Monte Carlo - Professional Tracker</title>
     <style>
         :root {
             --bg: #121212;
@@ -44,10 +44,9 @@
             border-radius: 10px; 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
+            gap: 12px; 
         }
         .config-item { display: flex; flex-direction: column; }
-        .config-full { grid-column: span 2; }
         
         input, select { 
             width: 100%; 
@@ -63,18 +62,23 @@
         }
         label { color: var(--sub); font-size: 0.75rem; margin-bottom: 4px; display: block; }
 
-        /* リスク表示エリア */
-        #riskDisplay {
-            text-align: right;
+        /* ステータス表示エリア */
+        .status-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+        .status-val {
             font-weight: bold;
-            font-size: 0.85rem;
-            margin-top: 2px;
+            font-size: 0.95rem;
+            text-align: left;
         }
         .risk-low { color: #60a5fa; }
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
 
-        .profit-bar { text-align: center; font-weight: bold; font-size: 1.1rem; margin: 2px 0; }
+        .profit-bar { text-align: center; font-weight: bold; font-size: 1.2rem; margin: 5px 0; }
 
         .display { 
             text-align: center; 
@@ -138,12 +142,12 @@
 <div class="container">
     <div class="config">
         <div class="config-item">
-            <label>スタック</label>
-            <input type="number" id="stack" value="100000" oninput="updateView()">
+            <label>スタート資金</label>
+            <input type="number" id="startCapital" value="100000" oninput="updateView()">
         </div>
         <div class="config-item">
-            <label>ベットサイズ</label>
-            <input type="number" id="baseBet" value="500" oninput="updateView()">
+            <label>ベット額 (1単位)</label>
+            <input type="number" id="baseBet" value="200" oninput="updateView()">
         </div>
         <div class="config-item">
             <label>配当</label>
@@ -152,9 +156,15 @@
                 <option value="2">2倍</option>
             </select>
         </div>
-        <div class="config-item">
-            <label>現在のリスク</label>
-            <div id="riskDisplay">--</div>
+        <div class="config-item status-area">
+            <div>
+                <label>リスク</label>
+                <div id="riskDisplay" class="status-val">--</div>
+            </div>
+            <div style="margin-top: 4px;">
+                <label>現在の軍資金</label>
+                <div id="currentFunds" class="status-val" style="color: #fff;">0</div>
+            </div>
         </div>
     </div>
 
@@ -182,14 +192,19 @@
     var totalProfit = 0;
     var undoStack = [];
 
-    function calculateRisk(currentBet) {
-        var stack = parseFloat(document.getElementById('stack').value) || 1;
-        var riskPercent = (currentBet / stack) * 100;
+    function updateStatusUI(currentBet) {
+        var startCap = parseFloat(document.getElementById('startCapital').value) || 0;
+        var currentFunds = startCap + totalProfit;
+        
+        // 軍資金表示の更新
+        document.getElementById('currentFunds').innerText = currentFunds.toLocaleString();
+        
+        // リスク計算（現在の軍資金ベース）
+        var riskPercent = currentFunds > 0 ? (currentBet / currentFunds) * 100 : 0;
         var riskEl = document.getElementById('riskDisplay');
         
+        riskEl.className = "status-val";
         var level = "";
-        riskEl.className = "";
-        
         if (riskPercent <= 1.0) {
             level = "Low";
             riskEl.classList.add('risk-low');
@@ -200,7 +215,6 @@
             level = "High";
             riskEl.classList.add('risk-high');
         }
-        
         riskEl.innerText = riskPercent.toFixed(1) + "% (" + level + ")";
     }
 
@@ -219,7 +233,7 @@
         pEl.innerText = "損益: " + totalProfit.toLocaleString();
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
-        calculateRisk(betAmt);
+        updateStatusUI(betAmt);
 
         var logHtml = "";
         for (var i = 0; i < Math.min(historyData.length, 12); i++) {
