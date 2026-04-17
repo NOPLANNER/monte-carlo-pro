@@ -3,37 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Compact</title>
+    <title>Monte Carlo Pro Compact - No Currency</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #e5e7eb; margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .container { width: 100%; max-width: 400px; margin: auto; background: #1e1e1e; padding: 15px; border-radius: 12px; box-sizing: border-box; }
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --primary: #3b82f6;
+            --win: #10b981;
+            --loss: #ef4444;
+            --sub: #9ca3af;
+        }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: #e5e7eb; 
+            margin: 0; 
+            padding: 8px; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-sizing: border-box;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 400px; 
+            margin: auto; 
+            background: var(--card); 
+            padding: 12px; 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+        }
         
-        /* 設定エリアをコンパクトに */
-        .config { background: #2d2d2d; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; }
-        input, select { width: 100%; padding: 6px; background: #3d3d3d; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 0.9rem; }
-        label { color: #9ca3af; margin-bottom: 2px; display: block; }
+        .config { 
+            background: #2d2d2d; 
+            padding: 8px; 
+            border-radius: 8px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 6px; 
+            font-size: 0.75rem; 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 5px; 
+            background: #3d3d3d; 
+            border: 1px solid #444; 
+            color: #fff; 
+            border-radius: 4px; 
+            font-size: 0.85rem; 
+        }
+        label { color: var(--sub); margin-bottom: 2px; display: block; }
 
-        .profit-bar { text-align: center; font-weight: bold; margin-bottom: 8px; font-size: 1rem; }
+        .profit-bar { text-align: center; font-weight: bold; font-size: 0.95rem; }
 
-        /* メイン表示 */
-        .display { text-align: center; padding: 15px; border: 2px solid #333; border-radius: 10px; margin-bottom: 10px; background: #181818; }
-        .bet-amt { font-size: 2.5rem; font-weight: 900; color: #3b82f6; margin: 2px 0; }
-        .seq-text { font-family: monospace; font-size: 1.2rem; background: #000; padding: 8px; border-radius: 6px; letter-spacing: 2px; color: #fff; overflow-x: auto; white-space: nowrap; }
+        .display { 
+            text-align: center; 
+            padding: 10px; 
+            border: 1.5px solid #333; 
+            border-radius: 10px; 
+            background: #181818; 
+        }
+        .bet-label { font-size: 0.7rem; color: var(--sub); }
+        .bet-amt { font-size: 2.5rem; font-weight: 900; color: var(--primary); line-height: 1.2; }
+        .seq-text { 
+            font-family: monospace; 
+            font-size: 1.1rem; 
+            background: #000; 
+            padding: 6px; 
+            border-radius: 6px; 
+            letter-spacing: 2px; 
+            color: #fff; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            margin-top: 4px;
+        }
 
-        /* ボタン */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 16px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: #fff; }
-        button:active { opacity: 0.7; }
-        .btn-win { background: #10b981; }
-        .btn-loss { background: #ef4444; }
-        .btn-undo { background: #4b5563; padding: 10px; font-size: 0.9rem; }
-        .btn-reset { background: transparent; color: #666; border: 1px solid #333; padding: 6px; font-size: 0.7rem; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        button { 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #fff; 
+            touch-action: manipulation;
+        }
+        button:active { opacity: 0.6; transform: scale(0.98); }
+        .btn-win { background: var(--win); }
+        .btn-loss { background: var(--loss); }
+        .btn-undo { background: #4b5563; font-size: 0.85rem; padding: 10px; }
+        .btn-reset { background: transparent; color: #555; border: 1px solid #333; font-size: 0.7rem; padding: 6px; }
 
-        /* 横並び履歴 */
-        .history-compact { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-height: 40px; }
-        .chip { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; min-width: 30px; text-align: center; }
-        .chip-w { background: #10b98122; color: #10b981; border: 1px solid #10b981; }
-        .chip-l { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
+        .history-compact { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 4px; 
+            justify-content: center; 
+            min-height: 25px; 
+            margin-top: 4px;
+        }
+        .chip { 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 0.65rem; 
+            font-weight: bold; 
+            min-width: 24px; 
+            text-align: center; 
+        }
+        .chip-w { color: var(--win); border: 1px solid var(--win); background: rgba(16, 185, 129, 0.1); }
+        .chip-l { color: var(--loss); border: 1px solid var(--loss); background: rgba(239, 68, 68, 0.1); }
     </style>
 </head>
 <body>
@@ -41,7 +123,7 @@
 <div class="container">
     <div class="config">
         <div style="grid-column: span 2;">
-            <label>軍資金 (円)</label>
+            <label>軍資金 / ターゲット</label>
             <input type="number" id="capital" value="100000" oninput="updateView()">
         </div>
         <div>
@@ -52,20 +134,16 @@
             </select>
         </div>
         <div>
-            <label>割合(%)</label>
-            <select id="percent" onchange="updateView()">
-                <option value="0.1">0.1</option>
-                <option value="0.5" selected>0.5</option>
-                <option value="1">1.0</option>
-            </select>
+            <label>割合 (リスク)</label>
+            <select id="percent" onchange="updateView()"></select>
         </div>
     </div>
 
-    <div id="profit" class="profit-bar">損益: ¥0</div>
+    <div id="profit" class="profit-bar">損益: 0</div>
 
     <div class="display">
-        <div style="font-size:0.75rem; color:#9ca3af;">NEXT BET</div>
-        <div id="betDisplay" class="bet-amt">¥0</div>
+        <div class="bet-label">NEXT BET</div>
+        <div id="betDisplay" class="bet-amt">0</div>
         <div id="seqDisplay" class="seq-text">1 2 3</div>
     </div>
 
@@ -76,8 +154,7 @@
         <button type="button" class="btn-reset" onclick="handleReset()">RESET</button>
     </div>
 
-    <div id="historyLog" class="history-compact">
-        </div>
+    <div id="historyLog" class="history-compact"></div>
 </div>
 
 <script>
@@ -85,6 +162,19 @@
     var historyData = [];
     var totalProfit = 0;
     var undoStack = [];
+
+    function createPercentOptions() {
+        var sel = document.getElementById('percent');
+        for (var i = 1; i <= 10; i++) {
+            var val = (i / 10).toFixed(1);
+            var opt = document.createElement('option');
+            opt.value = val;
+            var risk = i <= 3 ? "低" : i <= 6 ? "中" : "高";
+            opt.text = val + "% (" + risk + ")";
+            if (val == "0.5") opt.selected = true;
+            sel.appendChild(opt);
+        }
+    }
 
     function getBetValue() {
         var cap = parseFloat(document.getElementById('capital').value) || 0;
@@ -96,19 +186,17 @@
 
     function updateView() {
         var betAmt = getBetValue();
-        document.getElementById('betDisplay').innerText = "¥" + betAmt.toLocaleString();
+        document.getElementById('betDisplay').innerText = betAmt.toLocaleString();
         document.getElementById('seqDisplay').innerText = sequence.join(' ');
         
         var pEl = document.getElementById('profit');
-        pEl.innerText = "損益: ¥" + totalProfit.toLocaleString();
+        pEl.innerText = "損益: " + totalProfit.toLocaleString();
         pEl.style.color = totalProfit >= 0 ? "#10b981" : "#ef4444";
 
         var logHtml = "";
-        // 直近12回分を表示（横並び）
-        for (var i = 0; i < Math.min(historyData.length, 12); i++) {
+        for (var i = 0; i < Math.min(historyData.length, 14); i++) {
             var h = historyData[i];
-            var typeClass = (h.res === "W" ? "chip-w" : "chip-l");
-            logHtml += '<div class="chip ' + typeClass + '">' + h.res + '</div>';
+            logHtml += '<div class="chip ' + (h.res === "W" ? "chip-w" : "chip-l") + '">' + h.res + '</div>';
         }
         document.getElementById('historyLog').innerHTML = logHtml;
     }
@@ -120,7 +208,7 @@
         totalProfit += (currentBet * (payout - 1));
         sequence = sequence.slice((payout === 3 ? 2 : 1), (payout === 3 ? -2 : -1));
         historyData.unshift({ res: 'W', amt: currentBet });
-        checkFinish();
+        if (sequence.length <= 1) { alert("目標達成！"); sequence = [1, 2, 3]; }
         updateView();
     }
 
@@ -162,13 +250,7 @@
         });
     }
 
-    function checkFinish() {
-        if (sequence.length <= 1) {
-            alert("目標達成！");
-            sequence = [1, 2, 3];
-        }
-    }
-
+    createPercentOptions();
     updateView();
 </script>
 </body>
