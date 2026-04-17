@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monte Carlo Pro - Fixed Edition</title>
+    <title>Monte Carlo Pro - Perfect Fit</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -14,13 +14,13 @@
             --loss: #ef4444;
             --sub: #9ca3af;
         }
-        /* 画面固定の設定 */
+        /* 画面固定とセンタリング */
         html, body { 
             position: fixed;
             width: 100%;
             height: 100%;
             overflow: hidden; 
-            touch-action: none; /* スワイプによるスクロールを禁止 */
+            touch-action: none;
         }
         body { 
             font-family: -apple-system, sans-serif; 
@@ -30,11 +30,13 @@
             padding: 10px; 
             display: flex; 
             flex-direction: column; 
+            justify-content: center; /* 全体を縦方向中央に */
+            align-items: center; /* 全体を横方向中央に */
             box-sizing: border-box;
         }
         .container { 
             width: 100%; 
-            max-width: 400px; 
+            max-width: 400px; /* ここで横幅を制限 */
             margin: 0 auto; 
             background: var(--card); 
             padding: 14px; 
@@ -44,6 +46,7 @@
             gap: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             flex-shrink: 0;
+            box-sizing: border-box;
         }
         
         .config { 
@@ -69,17 +72,17 @@
         .risk-mid { color: #10b981; }
         .risk-high { color: #ef4444; }
 
-        .summary-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+        .summary-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; width: 100%; box-sizing: border-box; }
         .summary-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .summary-label { font-size: 0.6rem; color: var(--sub); }
         .summary-value { font-weight: bold; font-size: 1.05rem; }
 
-        .display { text-align: center; padding: 10px; border: 2px solid #333; border-radius: 12px; background: #181818; }
+        .display { text-align: center; padding: 10px; border: 2px solid #333; border-radius: 12px; background: #181818; width: 100%; box-sizing: border-box; }
         .bet-label { font-size: 0.7rem; color: var(--sub); letter-spacing: 1px; }
         .bet-amt { font-size: 3rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 2px 0; }
         .seq-text { font-family: monospace; font-size: 1.2rem; background: #000; padding: 8px; border-radius: 8px; letter-spacing: 2px; color: #fff; overflow-x: auto; white-space: nowrap; }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box; }
         button { padding: 15px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: #fff; touch-action: manipulation; }
         button:active { opacity: 0.6; transform: scale(0.96); }
         .btn-win { background: var(--win); box-shadow: 0 4px 0 #059669; }
@@ -87,22 +90,22 @@
         .btn-undo { background: #4b5563; font-size: 0.9rem; padding: 10px; }
         .btn-reset { background: transparent; color: #444; border: 1px solid #333; font-size: 0.7rem; padding: 10px; }
 
-        .history-compact { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 5px; }
+        .history-compact { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 5px; width: 100%; box-sizing: border-box; }
         .chip { padding: 4px 0; border-radius: 4px; font-size: 0.6rem; font-weight: bold; text-align: center; border: 1.5px solid transparent; }
         .chip-w { color: var(--win); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
         .chip-l { color: var(--loss); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
         .chip-latest { border-color: #ffffff !important; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
 
-        /* グラフエリア */
+        /* グラフエリアの微調整 */
         .chart-container {
             width: 100%;
             max-width: 400px;
             margin: 10px auto;
             background: var(--card);
             border-radius: 16px;
-            padding: 10px;
+            padding: 10px 15px 10px 5px; /* 右側を少し広めに、左を狭めて中央へ寄せる */
             box-sizing: border-box;
-            flex-grow: 1; /* 余ったスペースをグラフに割り当て */
+            flex-grow: 1; 
             min-height: 150px;
         }
     </style>
@@ -181,7 +184,7 @@
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['0'], // 初期状態を0回とする
+                labels: ['0'], 
                 datasets: [
                     {
                         label: '資金推移',
@@ -208,6 +211,11 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        right: 10 // Chart.js内部の右側パディングを追加
+                    }
+                },
                 scales: {
                     x: { 
                         display: true, 
@@ -223,7 +231,11 @@
                     y1: { 
                         position: 'right',
                         grid: { display: false },
-                        ticks: { color: '#10b981', font: { size: 9 } }
+                        ticks: { 
+                            color: '#10b981', 
+                            font: { size: 9 },
+                            padding: 5 // 数字を少し内側に寄せる
+                        }
                     }
                 },
                 plugins: { legend: { display: false } }
